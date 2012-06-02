@@ -1,2 +1,7 @@
+0.02    2 June 2012
+        Fixed problem with "die" not exiting the script if called inside an
+        eval.  Also made sure the line number mentioned is correct, when it
+        is impossible to run "blead" on the version of perl given.
+
 0.01    1 June 2012
         First version of Devel::MaintBlead.  No real tests yet.
