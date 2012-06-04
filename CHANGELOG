@@ -1,3 +1,9 @@
+0.03    4 June 2012
+        Added support for "default" setting, so additional runs of Makefile.PL
+        without code version, will keep using the one that was last seen.
+        Made sure that we will never overwrite any files when switching
+        between states.  Also added test-suite.
+
 0.02    2 June 2012
         Fixed problem with "die" not exiting the script if called inside an
         eval.  Also made sure the line number mentioned is correct, when it
