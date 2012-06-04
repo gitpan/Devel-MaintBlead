@@ -1,7 +1,7 @@
 package Devel::MaintBlead;
 
 # set version information
-$VERSION= '0.03';
+$VERSION= '0.04';
 
 # make sure we do everything by the book from now on
 use strict;
@@ -214,7 +214,7 @@ sub import {
 
         # get running script
         open( IN, $0 )
-          or die "Could not open script for reading '$0': $!";
+          or _die("Could not open script for reading '$0': $!");
         my $script= do { local $/; <IN> };
         close IN;
 
@@ -225,23 +225,24 @@ sub import {
             # adapt script
             print STDERR "Installing 'maintblead' code version logic for $0\n";
             open( OUT, ">$0" )
-              or die "Could not open script for writing '$0': $!";
+              or _die("Could not open script for writing '$0': $!");
             print OUT $script;
             close OUT
-              or die qq{Problem flushing "$0": $!\n};
+              or _die("Problem flushing '$0': $!");
 
             # write out check file
             open( OUT, ">$file" )
-              or die "Could not open '$file' for writing: $!";
+              or _die("Could not open '$file' for writing: $!");
             print OUT $code;
             close OUT
-              or die qq{Problem flushing "$file": $!\n};
+              or _die("Problem flushing '$file': $!");
 
             # update the manifest(s)
             foreach my $manifest ( glob( "MANIFEST*" ) ) {
                 open( OUT, ">>$manifest" ) or die "Could not open '$manifest': $!";
                 print OUT "$file                      maint/blead test (added by Devel::MaintBlead)\n";
-                close OUT;
+                close OUT
+                  or _die("Problem flushing '$manifest': $!");
             }
 
             # cannot continue to execute $0, so we do it from here and then exit
@@ -250,7 +251,7 @@ sub import {
         }
 
         # huh?
-        print STDERR __PACKAGE__ . " could not find code snippet, aborting\n";
+        _die( __PACKAGE__ . " could not find code snippet, aborting" );
         exit 1;
     }
 
@@ -258,15 +259,32 @@ sub import {
     elsif ( -s $file != length $code ) {
         print STDERR "Updating 'maintblead' code version logic\n";
         open( OUT, ">$file" )
-          or die "Could not open '$file' for writing: $!";
+          or _die("Could not open '$file' for writing: $!");
         print OUT $code;
         close OUT
-          or die qq{Problem flushing "$file": $!\n};
+          or _die("Problem flushing '$file': $!");
     }
 
     # do the check
     do $file;
 } #import
+
+#-------------------------------------------------------------------------------
+#
+# Internal subroutines
+#
+#-------------------------------------------------------------------------------
+# _die
+#
+#  IN: 1 message to die with
+
+sub _die {
+    my ($text)= @_;
+    chomp($text);
+
+    print STDERR $text, $\;
+    exit 1;
+} #_die
 
 #-------------------------------------------------------------------------------
 
@@ -278,7 +296,7 @@ Devel::MaintBlead - handle maint / blead code paths for distributions
 
 =head1 VERSION
 
-This documentation describes version 0.03.
+This documentation describes version 0.04.
 
 =head1 SYNOPSIS
 

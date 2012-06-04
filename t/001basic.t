@@ -129,7 +129,7 @@ to a true value.  On Unix-like systems like so:
 
 Thank you for your attention.
 
-Perl $vthat required--this is only $vthis, stopped at Makefile.PL line 268.
+Perl $vthat required--this is only $vthis, stopped at Makefile.PL line 269.
 STDERR
 
 # check for automatic selection
