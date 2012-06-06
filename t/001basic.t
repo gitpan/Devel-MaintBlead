@@ -44,7 +44,7 @@ print OUT \$Devel::MaintBlead::SIZE;
 close OUT;
 CODE
 ( my $final_code= $initial_code ) =~
-  s#(MaintBlead)"#$1; 1" || do 'maintblead'#;
+  s#(MaintBlead)"#$1; 1" or do 'maintblead'#;
 
 # set up blead source file
 mkdir 'lib';
@@ -129,7 +129,7 @@ to a true value.  On Unix-like systems like so:
 
 Thank you for your attention.
 
-Perl $vthat required--this is only $vthis, stopped at Makefile.PL line 269.
+Perl $vthat required--this is only $vthis, stopped at Makefile.PL line 266.
 STDERR
 
 # check for automatic selection

@@ -1,7 +1,7 @@
 package Devel::MaintBlead;
 
 # set version information
-$VERSION= '0.04';
+$VERSION= '0.05';
 
 # make sure we do everything by the book from now on
 use strict;
@@ -184,9 +184,6 @@ if ( my @files= glob( "lib_$this/$LIB_TREE/*" ) ) {
 else {
     print STDERR "Files for $this already in position\n";
 }
-
-# no need to do anything else
-1;
 CODE
 
 # set version info in generated file
@@ -220,7 +217,7 @@ sub import {
 
         # update the script
         if ( $script =~
-          s#(\s*eval\s*"\s*use\s+Devel::MaintBlead)\s*"#$1; 1" || do '$file'#s ) {
+          s#(\s*eval\s*"\s*use\s+Devel::MaintBlead)\s*(["'])#$1; 1$2 or do '$file'#s ) {
 
             # adapt script
             print STDERR "Installing 'maintblead' code version logic for $0\n";
@@ -296,7 +293,7 @@ Devel::MaintBlead - handle maint / blead code paths for distributions
 
 =head1 VERSION
 
-This documentation describes version 0.04.
+This documentation describes version 0.05.
 
 =head1 SYNOPSIS
 
@@ -308,7 +305,7 @@ This documentation describes version 0.04.
  # after
  our $LIB_TREE= 'Foo/Bar';
  our $REQUIRED= '5.014';
- eval "use Devel::MaintBlead" || do "maintblead";
+ eval "use Devel::MaintBlead; 1" or do 'maintblead';
  # "maintblead" written and added to MANIFEST
 
 =head1 DESCRIPTION
@@ -354,7 +351,7 @@ and the "maint" version of the files are:
 
 Please note that '**' here indicates any number of subdirectories.
 
-If the "maint" version is active, then its files are
+If the "maint" version is active, then its files are:
 
  lib/**.pm
  t/*.t
@@ -362,9 +359,12 @@ If the "maint" version is active, then its files are
 
 and then the "blead" files are:
 
- lib_blead/**.pm
- t_blead/*.t
+ lib_blead/**.pm_blead
+ t_blead/*.t_blead
  MANIFEST_blead
+
+Note that the inactive files have the type of code path added to their
+extension.
 
 If you want to convert your distribution to use this module, you will have
 to basically:
@@ -411,6 +411,9 @@ become "1.00", to really set it apart from the "maint" version.
 
 =back
 
+It is currently considered too dangerous to automate this process.  It might
+get automated later at some point in time.
+
 There are basically three situations in which this module can get called.
 
 =head2 INITIAL RUN BY DEVELOPER
@@ -442,7 +445,7 @@ It will also adapt the code in the Makefile.PL itself by changing it to:
 
  our $LIB_TREE= 'Foo/Bar';
  our $REQUIRED= '5.014';
- eval "use Devel::MaintBlead; 1" || do "maintblead";
+ eval "use Devel::MaintBlead; 1" or do "maintblead";
 
 Finally, it will adapt all the MANIFEST files by adding the line:
 
@@ -461,7 +464,7 @@ file, do any code path manipulation and not do anything else.
 A user trying to install the distribution, will most likely B<not> have the
 Devel::MaintBlead module installed.  This is ok, because then the eval in:
 
- eval "use Devel::MaintBlead; 1" || do "maintblead";
+ eval "use Devel::MaintBlead; 1" or do 'maintblead';
 
 will fail, and the "maintblead" file will get executed.  And thus perform
 the necessary actions in the user environment.
