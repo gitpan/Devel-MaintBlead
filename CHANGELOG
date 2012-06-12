@@ -1,3 +1,7 @@
+0.07    12 June 2012
+        Fixed additional problem with deeper source directories, which would
+        cause the copies in blib to not be updated when they should.
+
 0.06    12 June 2012
         Fixed problem with distributions that have more than one directory
         with module files.  Now also allows different number of source

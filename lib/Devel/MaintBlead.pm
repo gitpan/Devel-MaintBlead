@@ -1,7 +1,7 @@
 package Devel::MaintBlead;
 
 # set version information
-$VERSION= '0.06';
+$VERSION= '0.07';
 
 # make sure we do everything by the book from now on
 use strict;
@@ -100,6 +100,22 @@ sub mv_all {
 } #mv_all
 
 #-------------------------------------------------------------------------------
+# unlink_all
+#
+#  IN: 1 initial directory to remove files from
+
+sub unlink_all {
+    my ($dir)= @_;
+
+    # remove all files from this dir (don't care whether worked)
+    unlink glob "$dir/*";
+    
+    # recursively unlink all files in all directories
+    unlink_all($_)
+      foreach grep { -d } glob "$dir/*";
+} #unlink_all
+
+#-------------------------------------------------------------------------------
 
 # first time running Makefile.PL
 if ( !-e 'pm_to_blib' ) {
@@ -190,7 +206,7 @@ foreach my $postfix (@postfix) {
 }
 
 # need to move files into place
-if ( my @files= glob( "lib_$this/$LIB_TREE/*" ) ) {
+if ( glob( "lib_$this/$LIB_TREE/*" ) ) {
     print STDERR "Moving $this files into position\n";
 
     # move current files away
@@ -200,7 +216,7 @@ if ( my @files= glob( "lib_$this/$LIB_TREE/*" ) ) {
     mv_all( "_$this", '' );
 
     # make sure we will copy to blib
-    unlink glob( "blib/lib/$LIB_TREE/*" );
+    unlink_all("blib/lib/$LIB_TREE/*");
 }
 
 # right files already there
@@ -316,7 +332,7 @@ Devel::MaintBlead - handle maint / blead code paths for distributions
 
 =head1 VERSION
 
-This documentation describes version 0.06.
+This documentation describes version 0.07.
 
 =head1 SYNOPSIS
 
