@@ -1,7 +1,7 @@
 package Devel::MaintBlead;
 
 # set version information
-$VERSION= '0.05';
+$VERSION= '0.06';
 
 # make sure we do everything by the book from now on
 use strict;
@@ -39,7 +39,7 @@ my %maint=      map { $postfix[$_] => $_ } 0 .. $#postfix;
 my $auto_maint= ( $] < $REQUIRED ) || 0;
 
 #-------------------------------------------------------------------------------
-# set up file moving logic
+# set up file moving primitive
 use File::Copy ();
 sub mv {
     if ( -e $_[1] ) {
@@ -60,6 +60,45 @@ HUH
 
     return File::Copy::mv(@_);
 } #mv
+
+#-------------------------------------------------------------------------------
+# set up file moving logic
+#
+#  IN: 1 "from" interpolation
+#      2 "to" interpolation
+#      3 lib_tree setting (default: $LIB_TREE)
+
+sub mv_all {
+    my ( $from, $to, $lib_tree )= @_;
+
+    # move generic files
+    if ( !$lib_tree ) {
+        mv "MANIFEST$from", "MANIFEST$to";
+        mv "t$from/$_$from", "t$to/$_$to"
+          foreach
+            map { m#/([^/\.]+\.t)$from$# }
+            glob( "t$from/*$from" );
+
+        # use the base lib_tree
+        $lib_tree= $LIB_TREE;
+    }
+
+    # just make sure it exists
+    else {
+        mkdir "lib$to/$lib_tree";
+    }
+
+    # move lib files
+    mv "lib$from/$lib_tree/$_$from", "lib$to/$lib_tree/$_$to"
+      foreach
+        map { m#/([^/\.]+\.pm)$from$# }
+        glob( "lib$from/$lib_tree/*$from" );
+
+    # move them there for all subdirs
+    mv_all( $from, $to, "$lib_tree/$_" )
+      foreach map { m#/([^/]+)$# } grep { -d } glob "lib$from/$lib_tree/*"
+} #mv_all
+
 #-------------------------------------------------------------------------------
 
 # first time running Makefile.PL
@@ -155,26 +194,10 @@ if ( my @files= glob( "lib_$this/$LIB_TREE/*" ) ) {
     print STDERR "Moving $this files into position\n";
 
     # move current files away
-    mv "MANIFEST", "MANIFEST_$that";
-    mv "lib/$LIB_TREE/$_", "lib_$that/$LIB_TREE/${_}_$that"
-      foreach
-        map { m#/([^/\.]+\.pm)$# }
-        glob( "lib/$LIB_TREE/*" );
-    mv "t/$_", "t_$that/${_}_$that"
-      foreach
-        map { m#/([^/\.]+\.t)$# }
-        glob( "t/*" );
+    mv_all( '', "_$that" );
 
     # put files into place
-    mv "MANIFEST_$this", "MANIFEST";
-    mv "lib_$this/$LIB_TREE/${_}_$this", "lib/$LIB_TREE/$_"
-      foreach
-        map { m#/([^/\.]+\.pm)_$this$# }
-        @files;
-    mv "t_$this/${_}_$this", "t/$_"
-      foreach
-        map { m#/([^/]+\.t)_$this$# }
-        glob( "t_$this/*" );
+    mv_all( "_$this", '' );
 
     # make sure we will copy to blib
     unlink glob( "blib/lib/$LIB_TREE/*" );
@@ -293,7 +316,7 @@ Devel::MaintBlead - handle maint / blead code paths for distributions
 
 =head1 VERSION
 
-This documentation describes version 0.05.
+This documentation describes version 0.06.
 
 =head1 SYNOPSIS
 

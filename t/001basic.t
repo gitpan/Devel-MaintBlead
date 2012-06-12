@@ -8,7 +8,7 @@ use strict;
 use warnings;
 
 # initializations
-use Test::More tests => 136;
+use Test::More tests => 144;
 my $manifest= <<"TEXT";
 maintblead                      maint/blead test (added by Devel::MaintBlead)
 TEXT
@@ -18,6 +18,7 @@ my @files= ( qw(
  default
  maintblead
  lib/Foo/Bar.pm
+ lib/Foo/Bar/Baz.pm
  lib_maint/Foo/Bar.pm_maint
  Makefile.PL
  MANIFEST
@@ -49,7 +50,9 @@ CODE
 # set up blead source file
 mkdir 'lib';
 mkdir 'lib/Foo';
-create_file( "lib/Foo/Bar.pm", "blead version of source file" );
+create_file( "lib/Foo/Bar.pm", "blead version of source file #1" );
+mkdir 'lib/Foo/Bar';
+create_file( "lib/Foo/Bar/Baz.pm", "blead version of source file #2" );
 
 # set up maint source file
 mkdir 'lib_maint';
@@ -88,6 +91,7 @@ run( 3, 'maint', 0, <<STDERR, '_blead' );
 Forcing to use the 'maint' version of the code
 Moving maint files into position
 STDERR
+ok( -d 'lib_blead/Foo/Bar', "check existence of lib_blead/Foo/Bar" );
 
 # checks for selecting maint again (indirectly)
 run( 4, '', 0, <<STDERR, '_blead' );
@@ -99,6 +103,7 @@ run( 5, 'blead', 0, <<"STDERR", '_maint' );
 Forcing to use the 'blead' version of the code
 Moving blead files into position
 STDERR
+ok( -d 'lib_maint/Foo/Bar', "check existence of lib_maint/Foo/Bar" );
 
 # set up Makefile.PL for not allowing blead
 my $vthis=    vstring($]);
@@ -129,7 +134,7 @@ to a true value.  On Unix-like systems like so:
 
 Thank you for your attention.
 
-Perl $vthat required--this is only $vthis, stopped at Makefile.PL line 266.
+Perl $vthat required--this is only $vthis, stopped at Makefile.PL line 289.
 STDERR
 
 # check for automatic selection
@@ -151,10 +156,13 @@ STDERR
 # cleanup
 is( unlink(@files), scalar(@files), 'make sure we end up cleanly' );
 foreach ( qw(
+  lib/Foo/Bar
   lib/Foo
   lib
+  lib_blead/Foo/Bar
   lib_blead/Foo
   lib_blead
+  lib_maint/Foo/Bar
   lib_maint/Foo
   lib_maint
   t

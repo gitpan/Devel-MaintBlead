@@ -1,3 +1,10 @@
+0.06    12 June 2012
+        Fixed problem with distributions that have more than one directory
+        with module files.  Now also allows different number of source
+        files to exist between maint and blead versions.  Some empty
+        directories may get created in the process, but that doesn't feel
+        like a real problem.
+
 0.05    6 June 2012
         Integrated some remarks / notions from last nights's Amsterdam PM
         meeting.
