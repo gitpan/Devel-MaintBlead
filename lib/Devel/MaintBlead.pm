@@ -1,7 +1,7 @@
 package Devel::MaintBlead;
 
 # set version information
-$VERSION= '0.07';
+$VERSION= '0.08';
 
 # make sure we do everything by the book from now on
 use strict;
@@ -73,11 +73,12 @@ sub mv_all {
 
     # move generic files
     if ( !$lib_tree ) {
-        mv "MANIFEST$from", "MANIFEST$to";
-        mv "t$from/$_$from", "t$to/$_$to"
-          foreach
-            map { m#/([^/\.]+\.t)$from$# }
-            glob( "t$from/*$from" );
+        mv "MANIFEST$from", "MANIFEST$to"
+          or die "Could not move file MANIFEST$from -> $to: $!\n";
+        foreach ( map { m#/([^/\.]+\.t)$from$# } glob( "t$from/*$from" ) ) {
+            mv "t$from/$_$from", "t$to/$_$to"
+              or die "Could not move file t$from/$_$from -> $to: $!\n";
+        }
 
         # use the base lib_tree
         $lib_tree= $LIB_TREE;
@@ -88,15 +89,19 @@ sub mv_all {
         mkdir "lib$to/$lib_tree";
     }
 
-    # move lib files
-    mv "lib$from/$lib_tree/$_$from", "lib$to/$lib_tree/$_$to"
-      foreach
-        map { m#/([^/\.]+\.pm)$from$# }
-        glob( "lib$from/$lib_tree/*$from" );
+    # move lib files here
+    foreach ( map { m#/([^/\.]+\.pm)$from$# }
+              glob( "lib$from/$lib_tree/*$from" ) ) {
+        mv "lib$from/$lib_tree/$_$from", "lib$to/$lib_tree/$_$to"
+          or die "Could not move file $lib$from/$lib_tree/$_$from -> $to: $!\n";
+    }
+
+    # remove now possibly empty subdirectories
+    rmdir "lib$from/$lib_tree" if $from;
 
     # move them there for all subdirs
     mv_all( $from, $to, "$lib_tree/$_" )
-      foreach map { m#/([^/]+)$# } grep { -d } glob "lib$from/$lib_tree/*"
+      foreach map { m#/([^/]+)$# } grep { -d } glob "lib$from/$lib_tree/*";
 } #mv_all
 
 #-------------------------------------------------------------------------------
@@ -127,17 +132,13 @@ if ( !-e 'pm_to_blib' ) {
     close OUT;
 }
 
-# do we have an override?
-if (@ARGV) {
-    my $type= shift @ARGV;
-    $MAINT= $maint{$type};
+# extract override if there is one
+my $type;
+@ARGV=
+  grep { defined $maint{$_} ? ( $type= $_, $MAINT= $maint{$_}, 0 ) : 1 } @ARGV;
 
-    # huh?
-    if ( !defined $MAINT ) {
-        print STDERR "Don't understand '$type' to force version to test / install";
-        exit 1;
-    }
-
+# we have an override
+if ($type) {
     print STDERR "Forcing to use the '$type' version of the code\n";
     open( OUT, ">default" );
     print OUT $postfix[$MAINT];
@@ -154,7 +155,7 @@ else {
 # sorry, we can't help you
 if ( $auto_maint and !$MAINT ) {
 
-    # can't do blead, autoselect active, so go to main
+    # can't do blead, autoselect active, so go to maint
     if ( $ENV{AUTO_SELECT_MAINT_OR_BLEAD} ) {
         $MAINT=1;
     }
@@ -172,14 +173,14 @@ maintained as well.
 You can install that version of this distribution by running this $0
 with the additional "maint" parameter, like so:
 
- $^X $0 maint
+ $^X $0 maint @ARGV
 
 Or you can provide an automatic selection behavior, which would automatically
 select and install the right version of this distribution for the version of
 Perl provided, by setting the AUTO_SELECT_MAINT_OR_BLEAD environment variable
 to a true value.  On Unix-like systems like so:
 
- AUTO_SELECT_MAINT_OR_BLEAD=1 $^X $0
+ AUTO_SELECT_MAINT_OR_BLEAD=1 $^X $0 @ARGV
 
 Thank you for your attention.
 
@@ -206,7 +207,7 @@ foreach my $postfix (@postfix) {
 }
 
 # need to move files into place
-if ( glob( "lib_$this/$LIB_TREE/*" ) ) {
+if ( my @files= glob( "lib_$this/$LIB_TREE/*" ) ) {
     print STDERR "Moving $this files into position\n";
 
     # move current files away
@@ -332,7 +333,7 @@ Devel::MaintBlead - handle maint / blead code paths for distributions
 
 =head1 VERSION
 
-This documentation describes version 0.07.
+This documentation describes version 0.08.
 
 =head1 SYNOPSIS
 

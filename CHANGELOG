@@ -1,3 +1,8 @@
+0.08    7 December 2012
+        Fixed problem with other parameters than "maint" or "blead" being
+        passed to the initial call of "perl Makefile.PL" as described by
+        Justin Traer in https://rt.cpan.org/Ticket/Display.html?id=81354 .
+
 0.07    12 June 2012
         Fixed additional problem with deeper source directories, which would
         cause the copies in blib to not be updated when they should.

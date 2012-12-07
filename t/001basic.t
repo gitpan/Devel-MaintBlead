@@ -8,7 +8,7 @@ use strict;
 use warnings;
 
 # initializations
-use Test::More tests => 144;
+use Test::More tests => 182;
 my $manifest= <<"TEXT";
 maintblead                      maint/blead test (added by Devel::MaintBlead)
 TEXT
@@ -25,7 +25,7 @@ my @files= ( qw(
  MANIFEST_maint
  t/foo.t
  t_maint/foo.t_maint
-), map { ( "STDERR.$_", "STDOUT.$_" ) } 1 .. 8 );
+), map { ( "STDERR.$_", "STDOUT.$_" ) } 1 .. 11 );
 unlink(@files); # handy during development / fix previous failures
 
 # set up MANIFESTs
@@ -123,18 +123,18 @@ maintained as well.
 You can install that version of this distribution by running this Makefile.PL
 with the additional "maint" parameter, like so:
 
- $^X Makefile.PL maint
+ $^X Makefile.PL maint 
 
 Or you can provide an automatic selection behavior, which would automatically
 select and install the right version of this distribution for the version of
 Perl provided, by setting the AUTO_SELECT_MAINT_OR_BLEAD environment variable
 to a true value.  On Unix-like systems like so:
 
- AUTO_SELECT_MAINT_OR_BLEAD=1 $^X Makefile.PL
+ AUTO_SELECT_MAINT_OR_BLEAD=1 $^X Makefile.PL 
 
 Thank you for your attention.
 
-Perl $vthat required--this is only $vthis, stopped at Makefile.PL line 305.
+Perl $vthat required--this is only $vthis, stopped at Makefile.PL line 306.
 STDERR
 
 # check for automatic selection
@@ -153,13 +153,29 @@ Forcing to use the 'blead' version of the code
 Moving blead files into position
 STDERR
 
+# force to blead if blead already there
+run( 9, 'blead', 0, <<"STDERR", '_maint' );
+Forcing to use the 'blead' version of the code
+Files for blead already in position
+STDERR
+
+# try two other parameters, staying same with blead
+run( 10, 'INSTALLDIRS=site PREFIX=duh', 0, <<"STDERR", '_maint' );
+Files for blead already in position
+STDERR
+
+# going to blead without change
+run( 11, 'blead INSTALLDIRS=site', 0, <<"STDERR", '_maint' );
+Forcing to use the 'blead' version of the code
+Files for blead already in position
+STDERR
+
 # cleanup
 is( unlink(@files), scalar(@files), 'make sure we end up cleanly' );
 foreach ( qw(
   lib/Foo/Bar
   lib/Foo
   lib
-  lib_blead/Foo/Bar
   lib_blead/Foo
   lib_blead
   lib_maint/Foo/Bar
@@ -212,7 +228,7 @@ sub Makefile {
 #      4 STDERR contents required
 #      5 type of extra manifest to check
 #
-# Good for 12 tests
+# Good for 12 or 13 tests
 
 sub run {
     my ( $n, $extra, $status, $stderr, $type )= @_;
@@ -244,6 +260,10 @@ sub run {
         ok( -e "lib$_/Foo/Bar.pm$_", "check existence of lib$_/Foo/Bar.pm$_" );
         ok( -e "t$_/foo.t$_", "check existence of t$_/foo.t$_" );
     }
+
+    # check deeper files if necessary
+    ok( -e "lib$type/Foo/Bar/Baz.pm$type", "check existence of lib$type/Foo/Bar/Baz.pm$type" )
+      if $type ne '_maint';
 } #run
 
 #-------------------------------------------------------------------------------
